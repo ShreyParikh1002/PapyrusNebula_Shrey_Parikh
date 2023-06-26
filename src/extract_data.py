@@ -167,6 +167,8 @@ try:
                         Invoice__BillDetails__Quantity=int(text_list[i+1].strip())
                         Invoice__BillDetails__Rate=int(text_list[i+2].strip())
                         i+=4
+                        
+                        Invoice__Tax=int(text_list[-3].strip())
                         row_data=[Bussiness__City,	Bussiness__Country,	Bussiness__Description,	Bussiness__Name,	Bussiness__StreetAddress,	int(Bussiness__Zipcode),	Customer__Address__line1,	Customer__Address__line2,	Customer__Email,	Customer__Name,	Customer__PhoneNumber,	Invoice__BillDetails__Name,	Invoice__BillDetails__Quantity,	Invoice__BillDetails__Rate,	Invoice__Description.strip(),	Invoice__DueDate,	Invoice__IssueDate,	Invoice__Number,	Invoice__Tax]
                         # print(row_data)
                         sheet.append(row_data)
