@@ -83,8 +83,9 @@ try:
 
 
     for pdf_file in pdf_collection:
+        # reinitialising for each pdf
         date_count=0
-
+        Invoice__Description = ""
         # Set operation input from the current PDF file.
         source = FileRef.create_from_local_file(pdf_file)
         extract_pdf_operation.set_input(source)
@@ -112,9 +113,18 @@ try:
             for element in data['elements']:
                 if 'Text' in element:
 
+                    # getting bounds
+                    left_bound=element['Bounds'][0]
+
                     text_list.append(element['Text'])
                     temp_text=element['Text']
 
+                    # ------getting Invoice Details--------
+                    if(left_bound==details_left_bound):
+                        if (temp_text.strip()!="DETAILS"):
+                            Invoice__Description+=temp_text
+                        
+                            
                     # ----------getting dates--------------
                     match=re.search(date_pattern,temp_text)
                     if match:
@@ -141,24 +151,36 @@ try:
 
                 preprocessed_address=text_list[1].split(',')
 
-                Bussiness__StreetAddress=preprocessed_address[0]
-                Bussiness__City=preprocessed_address[1]
+                Bussiness__StreetAddress=preprocessed_address[0].strip()
+                Bussiness__City=preprocessed_address[1].strip()
 
-                Bussiness__Name=text_list[0]
-                Bussiness__Country=text_list[2]
-                Bussiness__Zipcode=text_list[3]
-                Bussiness__Description=text_list[8]
+                Bussiness__Name=text_list[0].strip()
+                Bussiness__Country=text_list[2].strip()
+                Bussiness__Zipcode=text_list[3].strip()
+                Bussiness__Description=text_list[8].strip()
+            
+            for i in range(len(text_list)):
+                if(text_list[i].strip()=="AMOUNT"):
+                    i+=1
+                    while(text_list[i].strip()!="Subtotal"):
+                        Invoice__BillDetails__Name=text_list[i+0].strip()
+                        Invoice__BillDetails__Quantity=int(text_list[i+1].strip())
+                        Invoice__BillDetails__Rate=int(text_list[i+2].strip())
+                        i+=4
+                        row_data=[Bussiness__City,	Bussiness__Country,	Bussiness__Description,	Bussiness__Name,	Bussiness__StreetAddress,	int(Bussiness__Zipcode),	Customer__Address__line1,	Customer__Address__line2,	Customer__Email,	Customer__Name,	Customer__PhoneNumber,	Invoice__BillDetails__Name,	Invoice__BillDetails__Quantity,	Invoice__BillDetails__Rate,	Invoice__Description.strip(),	Invoice__DueDate,	Invoice__IssueDate,	Invoice__Number,	Invoice__Tax]
+                        # print(row_data)
+                        sheet.append(row_data)
+
 
             # for index, text in enumerate(text_list, start=1):
             #     sheet.cell(row=index, column=col_num).value = text
-
-            row_data=[Bussiness__City,	Bussiness__Country,	Bussiness__Description,	Bussiness__Name,	Bussiness__StreetAddress,	int(Bussiness__Zipcode),	Customer__Address__line1,	Customer__Address__line2,	Customer__Email,	Customer__Name,	Customer__PhoneNumber,	Invoice__BillDetails__Name,	Invoice__BillDetails__Quantity,	Invoice__BillDetails__Rate,	Invoice__Description,	Invoice__DueDate,	Invoice__IssueDate,	Invoice__Number,	Invoice__Tax]
-            sheet.append(row_data)
+            # row_data=[Bussiness__City,	Bussiness__Country,	Bussiness__Description,	Bussiness__Name,	Bussiness__StreetAddress,	int(Bussiness__Zipcode),	Customer__Address__line1,	Customer__Address__line2,	Customer__Email,	Customer__Name,	Customer__PhoneNumber,	Invoice__BillDetails__Name,	Invoice__BillDetails__Quantity,	Invoice__BillDetails__Rate,	Invoice__Description.strip(),	Invoice__DueDate,	Invoice__IssueDate,	Invoice__Number,	Invoice__Tax]
+            # sheet.append(row_data)
 
         col_num+=1
 
 # ------------------------------------------------------------------------------------------------------------------------------
-    output_excel_file = "ExtractedData.xlsx" 
+    output_excel_file = str(int(time.time()))+"_ExtractedData.xlsx" 
     excel_output_path = os.path.join(base_path, "output",output_excel_file)
     workbook.save(excel_output_path)
     # Close the workbook
